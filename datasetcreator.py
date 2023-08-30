@@ -32,6 +32,7 @@ def readstockcsv(file, startdate, enddate, ETFname, interval):
     """
     
     pricedataraw = pd.read_csv(file, parse_dates = True, infer_datetime_format=(True), index_col = "Date")
+    pricedataraw.sort_index(inplace=True)
     pricedata = pricedataraw[startdate:enddate] #must be a quicker way of doing this without first reading in csv, look up for future
     pricedataresample = pricedata.resample(interval).asfreq()
     finalprices = pd.merge_asof(pricedataresample, pricedata, on = "Date", allow_exact_matches = True, direction = "backward")

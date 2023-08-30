@@ -19,7 +19,7 @@ def csv_creator(file_loc, baseline, startdate, enddate, includeSPY):
     enddate: String
         End date
     includeSPY: Boolean
-        include download of S&P500 for performance reference
+        include download of S&P500 SPY ETF for performance reference
 
     Returns
     -------
