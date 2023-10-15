@@ -30,7 +30,7 @@ def momentumanalyse(equitylogreturns, formation_start, formation_end, Rsquared, 
         Gradient of logarithmic returns analysis required to be selected as potential pick.
     use_gradient : Boolean
         Determines if momentum should be measured by a steady increase in log returns (gradient) or by the highest returns over the period
-
+        NOTE: WHEN USE_GRADIENT MAKE SURE DATA IS NOT TOO GRANULAR OR WILL BE USELESS METHOD
     Returns
     -------
     List of indexes of original array representing equities that meet momentum requirements set.
@@ -70,3 +70,50 @@ def momentumanalyse(equitylogreturns, formation_start, formation_end, Rsquared, 
                 goodindexes.append(i)
         momentumreturns = momentumreturns.iloc[:,goodindexes]
         return momentumreturns.columns #creates list of indexes with a correlation coefficient greater than Rsquared choice to pick
+    
+def momentumfactor(equitylogreturns, formation_start, formation_end, use_gradient):
+    """
+    
+
+    Parameters
+    ----------
+    equitylogreturns : Array
+        Collection of equities to be analysed.
+    formation_start : DATE
+        Date slice of array to start initial formation period analysis.
+    formation_end : DATE
+        Date slice of array to provide endpoint of formation period analysis.
+    use_gradient : Boolean
+        Determines if momentum should be measured by a steady increase in log returns (gradient) or by the highest returns over the period
+        NOTE: WHEN USE_GRADIENT MAKE SURE DATA IS NOT TOO GRANULAR OR WILL BE USELESS METHOD
+    Returns
+    -------
+    Array of momentum based performance for the relevant indexes
+    """
+        
+
+    momentumreturns=equitylogreturns.loc[formation_start:formation_end] #looks at raw log returns in time before holding period
+    
+    if use_gradient == False:
+        straightreturns = np.exp(momentumreturns.sum())
+        plt.style.use('seaborn')
+        momentumreturns.plot(kind='line', figsize=(24, 15), title='log returns formation period', legend=None)
+        return straightreturns
+        
+    else:
+        
+        momentumreturns = momentumreturns.loc[(momentumreturns!=0).any(axis=1)]
+        plt.style.use('seaborn')
+        momentumreturns.plot(kind='line', figsize=(24, 15), title='log returns formation period', legend=None)
+        regressreturns=momentumreturns.to_numpy()
+        regressreturns=regressreturns.transpose()
+        X=np.arange(len(regressreturns[0]))
+        corrcoeff=np.empty((0, 2), float)
+        for row in regressreturns:  #runs least squares regression on each row to work out movement of returns
+            result=stats.linregress(x=X, y=row)
+            corrcoeff=np.append(corrcoeff, [[result.slope, result.rvalue]], axis=0)
+        #creates array with gradients in 1st column and corr coefficients in 2nd
+        momentumindex = pd.DataFrame(corrcoeff, columns = ['gradient', 'correlationcoeff'])
+        momentumindex.index = (momentumreturns.columns.values.tolist())
+        return momentumindex
+        
