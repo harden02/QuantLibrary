@@ -5,7 +5,7 @@ Downloader to retrieve csv of EOD adj close stockdata from given list of symbols
 import pandas as pd
 import yfinance as yf
 
-def csv_creator(file_loc, baseline, startdate, enddate, includeSPY):
+def csv_creator(output_loc, baseline, startdate, enddate, includeSPY):
     
     """
     Parameters
@@ -35,7 +35,7 @@ def csv_creator(file_loc, baseline, startdate, enddate, includeSPY):
     data=yf.download(stocks, start=startdate, end=enddate, interval='1d') 
     pricedata=data.drop(["Close", "High", "Low", "Open", "Volume"], axis=1)
     pricedata.columns=pricedata.columns.droplevel(level=0) 
-    pricedata.to_csv('S&P500pricesadj.csv')
+    pricedata.to_csv(output_loc)
     
     if includeSPY:
         SPYd=yf.download('SPY', start=startdate, end=enddate, interval='1d') 
