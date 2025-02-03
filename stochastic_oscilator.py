@@ -10,10 +10,10 @@ from scipy import stats
 
 def calculate_oscillator(price_data, period):
     
-    pricedata = price_data.iloc[-period:]
-    most_recent = pricedata[-1]
-    lowest = pricedata.min()
-    highest = pricedata.max()
+    price_data = price_data.iloc[-period:]
+    most_recent = price_data[-1]
+    lowest = price_data.min()
+    highest = price_data.max()
     
     oscillator = ((most_recent - lowest) / (highest - lowest)) * 100
     

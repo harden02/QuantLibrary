@@ -1,83 +1,59 @@
-# -*- coding: utf-8 -*-
-"""
-Modularised analysis of logarithmic return to identify exponential returns on momentum performing equities
-Consider expanding to look for equities without inflection points
-"""
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import stats
 import math
 
-
-
-
-def momentumanalyse(equitylogreturns, formation_start, formation_end, Rsquared, slope, use_gradient):
+def momentum_factor(equity_log_returns, formation_start, formation_end, use_gradient, r_squared):
     """
-    
-
-    Parameters
-    ----------
-    equitylogreturns : Array
-        Collection of equities to be analysed.
-    formation_start : DATE
-        Date slice of array to start initial formation period analysis.
-    formation_end : DATE
-        Date slice of array to provide endpoint of formation period analysis.
-    Rsquared : FLOAT
-        Correlation coefficient for momentum analysis.
-    slope : FLOAT
-        Gradient of logarithmic returns analysis required to be selected as potential pick.
+    Gradient of logarithmic returns analysis required to be selected as potential pick.
     use_gradient : Boolean
         Determines if momentum should be measured by a steady increase in log returns (gradient) or by the highest returns over the period
         NOTE: WHEN USE_GRADIENT MAKE SURE DATA IS NOT TOO GRANULAR OR WILL BE USELESS METHOD
+    r_squared : float
+        The threshold for the R-squared value to consider a stock as having good momentum.
     Returns
     -------
     List of indexes of original array representing equities that meet momentum requirements set.
     """
         
-
-    momentumreturns=equitylogreturns.loc[formation_start:formation_end] #looks at raw log returns in year before holding period
+    momentum_returns = equity_log_returns.loc[formation_start:formation_end] #looks at raw log returns in year before holding period
     
-    if use_gradient == False:
-        
-        straightreturns = np.exp(momentumreturns.sum())
-        toppercent = math.floor(0.2*len(straightreturns))
-        highestmomentum = straightreturns.nlargest(n=toppercent, keep='first')
+    if not use_gradient:
+        straight_returns = np.exp(momentum_returns.sum())
+        top_percent = math.floor(0.2 * len(straight_returns))
+        highest_momentum = straight_returns.nlargest(n=top_percent, keep='first')
         plt.style.use('seaborn')
-        momentumreturns.plot(kind='line', figsize=(24, 15), title='log returns formation period', legend=None)
-        return highestmomentum.index
+        momentum_returns.plot(kind='line', figsize=(24, 15), title='log returns formation period', legend=None)
+        return highest_momentum.index
         
     else:
-        
-        momentumreturns.drop(columns=momentumreturns.columns[momentumreturns.mean()<0], inplace=True)
-        momentumreturns.drop(columns=momentumreturns.columns[momentumreturns.iloc[-1]<0], inplace=True)
+        momentum_returns.drop(columns=momentum_returns.columns[momentum_returns.mean() < 0], inplace=True)
+        momentum_returns.drop(columns=momentum_returns.columns[momentum_returns.iloc[-1] < 0], inplace=True)
         plt.style.use('seaborn')
-        momentumreturns.plot(kind='line', figsize=(24, 15), title='log returns formation period', legend=None)
-        regressreturns=momentumreturns.to_numpy()
-        regressreturns=regressreturns.transpose()
-        X=np.arange(len(regressreturns[0]))
-        corrcoeff=np.empty((0, 2), float)
-        for row in regressreturns:  #runs least squares regression on each row to work out movement of returns
-            result=stats.linregress(x=X, y=row)
-            corrcoeff=np.append(corrcoeff, [[result.slope, result.rvalue]], axis=0)
+        momentum_returns.plot(kind='line', figsize=(24, 15), title='log returns formation period', legend=None)
+        regress_returns = momentum_returns.to_numpy()
+        regress_returns = regress_returns.transpose()
+        X = np.arange(len(regress_returns[0]))
+        corr_coeff = np.empty((0, 2), float)
+        for row in regress_returns:  #runs least squares regression on each row to work out movement of returns
+            result = stats.linregress(x=X, y=row)
+            corr_coeff = np.append(corr_coeff, [[result.slope, result.rvalue]], axis=0)
         #creates array with gradients in 1st column and corr coefficients in 2nd
         
-        goodindexes=[]
-        for i in range(len(corrcoeff)):
+        good_indexes = []
+        for i in range(len(corr_coeff)):
             print(i)
-            if (corrcoeff[i, 1])**2 > (Rsquared) and corrcoeff[i, 0] > 0:  #CONDITION FOR STOCK PICKING
-                goodindexes.append(i)
-        momentumreturns = momentumreturns.iloc[:,goodindexes]
-        return momentumreturns.columns #creates list of indexes with a correlation coefficient greater than Rsquared choice to pick
+            if (corr_coeff[i, 1])**2 > r_squared and corr_coeff[i, 0] > 0:  #CONDITION FOR STOCK PICKING
+                good_indexes.append(i)
+        momentum_returns = momentum_returns.iloc[:, good_indexes]
+        return momentum_returns.columns #creates list of indexes with a correlation coefficient greater than r_squared choice to pick
     
-def momentumfactor(equitylogreturns, formation_start, formation_end, use_gradient):
+def momentum_factor(equity_log_returns, formation_start, formation_end, use_gradient):
     """
-    
-
     Parameters
     ----------
-    equitylogreturns : Array
+    equity_log_returns : Array
         Collection of equities to be analysed.
     formation_start : DATE
         Date slice of array to start initial formation period analysis.
@@ -91,29 +67,27 @@ def momentumfactor(equitylogreturns, formation_start, formation_end, use_gradien
     Array of momentum based performance for the relevant indexes
     """
         
-
-    momentumreturns=equitylogreturns.loc[formation_start:formation_end] #looks at raw log returns in time before holding period
+    momentum_returns = equity_log_returns.loc[formation_start:formation_end] #looks at raw log returns in time before holding period
     
-    if use_gradient == False:
-        straightreturns = np.exp(momentumreturns.sum())
+    if not use_gradient:
+        straight_returns = np.exp(momentum_returns.sum())
         plt.style.use('seaborn')
-        momentumreturns.plot(kind='line', figsize=(24, 15), title='log returns formation period', legend=None)
-        return straightreturns
+        momentum_returns.plot(kind='line', figsize=(24, 15), title='log returns formation period', legend=None)
+        return straight_returns
         
     else:
-        
-        momentumreturns = momentumreturns.loc[(momentumreturns!=0).any(axis=1)]
+        momentum_returns = momentum_returns.loc[(momentum_returns != 0).any(axis=1)]
         plt.style.use('seaborn')
-        momentumreturns.plot(kind='line', figsize=(24, 15), title='log returns formation period', legend=None)
-        regressreturns=momentumreturns.to_numpy()
-        regressreturns=regressreturns.transpose()
-        X=np.arange(len(regressreturns[0]))
-        corrcoeff=np.empty((0, 2), float)
-        for row in regressreturns:  #runs least squares regression on each row to work out movement of returns
-            result=stats.linregress(x=X, y=row)
-            corrcoeff=np.append(corrcoeff, [[result.slope, result.rvalue]], axis=0)
+        momentum_returns.plot(kind='line', figsize=(24, 15), title='log returns formation period', legend=None)
+        regress_returns = momentum_returns.to_numpy()
+        regress_returns = regress_returns.transpose()
+        X = np.arange(len(regress_returns[0]))
+        corr_coeff = np.empty((0, 2), float)
+        for row in regress_returns:  #runs least squares regression on each row to work out movement of returns
+            result = stats.linregress(x=X, y=row)
+            corr_coeff = np.append(corr_coeff, [[result.slope, result.rvalue]], axis=0)
         #creates array with gradients in 1st column and corr coefficients in 2nd
-        momentumindex = pd.DataFrame(corrcoeff, columns = ['gradient', 'correlationcoeff'])
-        momentumindex.index = (momentumreturns.columns.values.tolist())
-        return momentumindex
+        momentum_index = pd.DataFrame(corr_coeff, columns=['gradient', 'correlation_coeff'])
+        momentum_index.index = momentum_returns.columns.values.tolist()
+        return momentum_index
         

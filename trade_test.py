@@ -7,22 +7,22 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-def trade(rawlogreturns, comparativelogreturns, startpoint, comparativedatafile, enddate, interval):
+def trade(raw_log_returns, comparative_log_returns, start_point, comparative_data_file, end_date, interval):
     """
     
 
     Parameters
     ----------
-    rawlogreturns : Array
+    raw_log_returns : Array
         log returns to be used for analysis.
-    comparativelogreturns : Array
+    comparative_log_returns : Array
         log returns in relation to ETF to be used for analysis.
-    startpoint : INT
+    start_point : INT
         Starting date slice for trading. REMEMBER: STARTING SLICE NEXT INTERVAL AFTER FORMATION, OTHERWISE FORESIGHT BIAS
-    comparativedatafile : filepath
+    comparative_data_file : filepath
         file comparing data for comparison (e.g SPY).
-    enddate : DATE
-        Ending date of comparativedatafile csv to read, match with end date of your trading data.
+    end_date : DATE
+        Ending date of comparative_data_file csv to read, match with end date of your trading data.
 
     Returns
     -------
@@ -30,30 +30,30 @@ def trade(rawlogreturns, comparativelogreturns, startpoint, comparativedatafile,
 
     """
 
-    rawstratreturns=rawlogreturns[startpoint:enddate] #log returns for hold period
-    strategyreturn=np.mean(np.exp(rawstratreturns.sum()))
+    raw_strat_returns = raw_log_returns[start_point:end_date] #log returns for hold period
+    strategy_return = np.mean(np.exp(raw_strat_returns.sum()))
     plt.style.use('seaborn')
-    rawstratreturns.plot(kind='line', figsize=(24, 15), title='Holding period Return selected equities')
+    raw_strat_returns.plot(kind='line', figsize=(24, 15), title='Holding period Return selected equities')
     #plots log returns for visualization of momentum "wave"
-    benchmarkstratreturns=comparativelogreturns[startpoint:enddate]
-    benchmarkreturn=np.mean(np.exp(benchmarkstratreturns.sum()))
+    benchmark_strat_returns = comparative_log_returns[start_point:end_date]
+    benchmark_return = np.mean(np.exp(benchmark_strat_returns.sum()))
     #same as previous but comparing to ETF as benchmark
     
-    print("return in tested holding period:", strategyreturn)
-    print("performance compared to benchmark in holding period:", benchmarkreturn)
+    print("return in tested holding period:", strategy_return)
+    print("performance compared to benchmark in holding period:", benchmark_return)
     
-    SPYpricedataraw = pd.read_csv(comparativedatafile, parse_dates = True, index_col = "Date")
-    SPYpricedata = SPYpricedataraw[:enddate] #must be a quicker way of doing this without first reading in csv, look up for future
-    SPYpricedataresample = SPYpricedata.resample(interval).asfreq()
-    SPYfinalprices = pd.merge_asof(SPYpricedataresample, SPYpricedata, on = "Date", allow_exact_matches = True, direction = "backward")
-    SPYfinalprices.dropna(axis=1, inplace=True)
-    SPYfinalprices.columns = SPYfinalprices.columns.str.strip('_y')
-    SPYfinalprices.set_index("Date", inplace=True)
+    spy_price_data_raw = pd.read_csv(comparative_data_file, parse_dates=True, index_col="Date")
+    spy_price_data = spy_price_data_raw[:end_date] #must be a quicker way of doing this without first reading in csv, look up for future
+    spy_price_data_resample = spy_price_data.resample(interval).asfreq()
+    spy_final_prices = pd.merge_asof(spy_price_data_resample, spy_price_data, on="Date", allow_exact_matches=True, direction="backward")
+    spy_final_prices.dropna(axis=1, inplace=True)
+    spy_final_prices.columns = spy_final_prices.columns.str.strip('_y')
+    spy_final_prices.set_index("Date", inplace=True)
     #importing SPY for pure benchmark
-    SPYlogreturns=np.log(SPYfinalprices/SPYfinalprices.shift(1))  #calculates log returns 
-    SPYreturns = SPYlogreturns[startpoint:enddate]  #returns from SPY over hold period
-    SPYreturn = np.exp(SPYreturns.sum()) #overall SPY return
-    print('performance of SPY in same period was', SPYreturn)
-    returnSPY = SPYreturn.iloc[0] #otherwise junk is written into CSV because of series datatype
+    spy_log_returns = np.log(spy_final_prices / spy_final_prices.shift(1))  #calculates log returns 
+    spy_returns = spy_log_returns[start_point:end_date]  #returns from SPY over hold period
+    spy_return = np.exp(spy_returns.sum()) #overall SPY return
+    print('performance of SPY in same period was', spy_return)
+    return_spy = spy_return.iloc[0] #otherwise junk is written into CSV because of series datatype
 
-    return (strategyreturn, benchmarkreturn, returnSPY)
+    return (strategy_return, benchmark_return, return_spy)

@@ -7,7 +7,7 @@ from pandas.tseries.holiday import USFederalHolidayCalendar
 #Generates logarithmic returns file and log returns in relation to the ETF that is being tracked
 
 
-def readstockcsv(file, startdate, enddate, ETFname, interval, blind):
+def read_stock_csv(file, start_date, end_date, etf_name, interval, blind):
     """
     
 
@@ -15,11 +15,11 @@ def readstockcsv(file, startdate, enddate, ETFname, interval, blind):
     ----------
     file : path
         csv of stock prices to be read.
-    startdate : DATE
+    start_date : DATE
         start date for analysis.
-    enddate : DATE
+    end_date : DATE
         end date for analysis.
-    ETFname : STRING
+    etf_name : STRING
         ticker symbol for ETF present in the stock file that it's following.
     interval : STRING
         interval to sample, i.e 3BMS for 3 business months or B for each business day.
@@ -28,26 +28,26 @@ def readstockcsv(file, startdate, enddate, ETFname, interval, blind):
 
     Returns
     -------
-    finalprices : ARRAY
+    final_prices : ARRAY
         Resampled and corrected stock prices.
 
     """
     
-    pricedataraw = pd.read_csv(file, parse_dates = True, infer_datetime_format=(True), index_col = "Date")
-    pricedataraw.sort_index(inplace=True)
-    pricedata = pricedataraw[startdate:enddate] #must be a quicker way of doing this without first reading in csv, look up for future
-    if blind == True:
-        pricedata.drop(ETFname, axis = 1, inplace=True)
-        pricedata.dropna(axis = 1, inplace=True)
-        finalpricesarray = pricedata.to_numpy()
-        return finalpricesarray
+    price_data_raw = pd.read_csv(file, parse_dates=True, infer_datetime_format=True, index_col="Date")
+    price_data_raw.sort_index(inplace=True)
+    price_data = price_data_raw[start_date:end_date] #must be a quicker way of doing this without first reading in csv, look up for future
+    if blind:
+        price_data.drop(etf_name, axis=1, inplace=True)
+        price_data.dropna(axis=1, inplace=True)
+        final_prices_array = price_data.to_numpy()
+        return final_prices_array
     else:
-        pricedataresample = pricedata.resample(interval).asfreq()
-        finalprices = pd.merge_asof(pricedataresample, pricedata, on = "Date", allow_exact_matches = True, direction = "backward")
-        finalprices.dropna(axis=1, inplace=True)
-        finalprices.columns = finalprices.columns.str.strip('_y')
-        finalprices.set_index("Date", inplace=True)
-        return finalprices
+        price_data_resample = price_data.resample(interval).asfreq()
+        final_prices = pd.merge_asof(price_data_resample, price_data, on="Date", allow_exact_matches=True, direction="backward")
+        final_prices.dropna(axis=1, inplace=True)
+        final_prices.columns = final_prices.columns.str.strip('_y')
+        final_prices.set_index("Date", inplace=True)
+        return final_prices
 
 
 def logreturn(stockdata, ETFname, relativereturn):
@@ -77,6 +77,3 @@ def logreturn(stockdata, ETFname, relativereturn):
         return {"logreturns" : logreturns, "relativelogreturns" :relativelogreturns}
     else:
         return logreturns
-        
-
-
